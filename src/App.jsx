@@ -1,11 +1,23 @@
-function App() {
-  return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-      <h1>BulSU-ALAS(01)</h1>
-      <p>Malolos City, Bulacan — Weather Station Dashboard</p>
-      <p>Environment ready ✅</p>
-    </div>
-  );
-}
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import Dashboard from './pages/Dashboard'
+import './index.css'
 
-export default App;
+/**
+ * Root application router.
+ * Currently routes:
+ *   /          → public dashboard
+ *
+ * Admin routes (Supabase Auth protected) will be added in the next phase:
+ *   /admin     → admin login + CSV export + alert acknowledgment
+ */
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/"  element={<Dashboard />} />
+        {/* Catch-all: redirect unknown paths to dashboard */}
+        <Route path="*"  element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
