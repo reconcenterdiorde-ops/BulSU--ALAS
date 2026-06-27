@@ -11,7 +11,7 @@ import { subHours, subDays, format } from 'date-fns'
  * This keeps chart performance fast even for long ranges.
  */
 export function useHistorical(timeRange = '24h') {
-  const [data, setData]       = useState([])
+  const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -32,14 +32,14 @@ export function useHistorical(timeRange = '24h') {
 
           if (!error && rows) {
             setData(rows.map(r => ({
-              time:     format(new Date(r.recorded_at), 'HH:mm'),
+              time: format(new Date(r.recorded_at), 'HH:mm'),
               fullTime: r.recorded_at,
-              temp:     r.temp,
+              temp: r.temp,
               humidity: r.humidity,
               pressure: r.pressure,
-              wind:     r.wind_avg_kmh,
-              rain:     r.precip_qty,
-              uv:       r.uv_index
+              wind: r.wind_avg_kmh,
+              rain: r.precip_qty,
+              uv: r.uv_index
             })))
           }
         } else {
@@ -57,14 +57,14 @@ export function useHistorical(timeRange = '24h') {
 
           if (!error && rows) {
             setData(rows.map(r => ({
-              time:     format(new Date(r.hour_start), timeRange === '7d' ? 'MM/dd HH:mm' : 'MM/dd'),
+              time: format(new Date(r.hour_start), timeRange === '7d' ? 'MM/dd HH:mm' : 'MM/dd'),
               fullTime: r.hour_start,
-              temp:     r.avg_temp,
+              temp: r.avg_temp,
               humidity: r.avg_humidity,
               pressure: r.avg_pressure,
-              wind:     r.avg_wind_kmh,
-              rain:     r.total_precip,
-              uv:       r.avg_uv
+              wind: r.avg_wind_kmh,
+              rain: r.total_precip,
+              uv: r.avg_uv
             })))
           }
         }

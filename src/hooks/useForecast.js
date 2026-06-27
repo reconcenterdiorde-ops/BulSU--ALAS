@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react'
 import { supabase, STATION_ID } from '../lib/supabase'
 
-/**
- * Fetches the next 4 hourly forecast rows.
- * Refreshes every 30 minutes since forecasts update every 4 hours.
- */
+// Fetch next 4 hourly forecasts from current time
 export function useForecast() {
   const [forecast, setForecast] = useState([])
-  const [loading, setLoading]   = useState(true)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function fetchForecast() {
@@ -26,8 +23,7 @@ export function useForecast() {
     }
 
     fetchForecast()
-
-    // Refresh every 30 minutes — forecasts don't change often
+    // Refresh every 30 min — forecasts update every 4 hours so this is conservative
     const interval = setInterval(fetchForecast, 30 * 60 * 1000)
     return () => clearInterval(interval)
   }, [])

@@ -1,36 +1,45 @@
 import { AlertTriangle } from 'lucide-react'
+import { formatDistanceToNow, parseISO } from 'date-fns'
 
-/**
- * Displays active PAGASA-aligned weather warnings.
- * Color-coded by severity (red/orange/yellow).
- * Hidden entirely when no active alerts exist.
- */
+// Map severity string → banner CSS class
+function sevClass(sev) {
+  if (!sev) return 'sev-low'
+  const s = sev.toUpperCase()
+  if (['EXTREME', 'INTENSE'].includes(s)) return 'sev-extreme'
+  if (['SEVERE', 'DANGER', 'HIGH', 'VERY HIGH'].includes(s)) return 'sev-high'
+  if (['MODERATE', 'CAUTION', 'ALERT'].includes(s)) return 'sev-moderate'
+  return 'sev-low'
+}
+
+// Show the single highest-severity active alert (matching ALAS_v4's single-banner style)
+function highestAlert(alerts) {
+  const order = ['EXTREME', 'INTENSE', 'SEVERE', 'DANGER', 'VERY HIGH', 'HIGH', 'MODERATE', 'CAUTION', 'ALERT', 'HEAVY', 'LOW']
+  return alerts.slice().sort((a, b) => {
+    const ai = order.indexOf((a.severity || '').toUpperCase())
+    const bi = order.indexOf((b.severity || '').toUpperCase())
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+  })[0]
+}
+
 export default function AlertBanner({ alerts, loading }) {
-  if (loading || alerts.length === 0) return null
+  if (loading || !alerts || alerts.length === 0) return null
 
-  // Deduplicate: show only the most recent alert per alert_type
-  const seen = new Set()
-  const unique = alerts.filter(a => {
-    if (seen.has(a.alert_type)) return false
-    seen.add(a.alert_type)
-    return true
-  })
+  const alert = highestAlert(alerts)
+  if (!alert) return null
+
+  const ago = alert.alerted_at
+    ? formatDistanceToNow(parseISO(alert.alerted_at), { addSuffix: true })
+    : ''
 
   return (
-    <div className="card">
-      <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}>
-        <AlertTriangle size={13} />
-        Active Warnings
+    <div className={`alert-banner ${sevClass(alert.severity)}`}>
+      <div className="alert-icon">
+        <AlertTriangle size={18} />
       </div>
-      <div className="alert-banner">
-        {unique.map((alert) => (
-          <div key={alert.id} className={`alert-item ${alert.severity}`}>
-            <span className="alert-type">{alert.alert_type}</span>
-            <span className="alert-msg">{alert.message}</span>
-            <span className="alert-value">{alert.value}</span>
-          </div>
-        ))}
-      </div>
+      <span className="alert-type">{alert.alert_type}</span>
+      <span className="alert-msg">{alert.message}</span>
+      <span className="alert-value">{alert.value}</span>
+      <span className="alert-ts">{ago}</span>
     </div>
   )
 }

@@ -8,8 +8,8 @@ import { supabase, STATION_ID } from '../lib/supabase'
  */
 export function useLatestObservation() {
   const [observation, setObservation] = useState(null)
-  const [loading, setLoading]         = useState(true)
-  const [error, setError]             = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     // 1. Initial fetch — get the most recent row immediately
@@ -41,9 +41,9 @@ export function useLatestObservation() {
       .on(
         'postgres_changes',
         {
-          event:  'INSERT',
+          event: 'INSERT',
           schema: 'public',
-          table:  'observations',
+          table: 'observations',
           filter: `station_id=eq.${STATION_ID}`
         },
         (payload) => {

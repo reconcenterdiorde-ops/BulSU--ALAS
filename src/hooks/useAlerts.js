@@ -33,9 +33,9 @@ export function useAlerts() {
       .on(
         'postgres_changes',
         {
-          event:  'INSERT',
+          event: 'INSERT',
           schema: 'public',
-          table:  'alerts',
+          table: 'alerts',
           filter: `station_id=eq.${STATION_ID}`
         },
         (payload) => {

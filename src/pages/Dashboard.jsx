@@ -1,52 +1,61 @@
-import Header            from '../components/Header'
-import AlertBanner       from '../components/AlertBanner'
+import Header from '../components/Header'
+import PersistentBanner from '../components/PersistentBanner'
+import AlertsPanel from '../components/AlertsPanel'
 import CurrentConditions from '../components/CurrentConditions'
-import ForecastStrip     from '../components/ForecastStrip'
-import HistoricalChart   from '../components/HistoricalChart'
-import Footer            from '../components/Footer'
+import ForecastStrip from '../components/ForecastStrip'
+import HistoricalChart from '../components/HistoricalChart'
+import Footer from '../components/Footer'
 
 import { useLatestObservation } from '../hooks/useLatestObservation'
-import { useAlerts }            from '../hooks/useAlerts'
-import { useForecast }          from '../hooks/useForecast'
+import { useAlerts } from '../hooks/useAlerts'
+import { useForecast } from '../hooks/useForecast'
+import { useAlertHistory } from '../hooks/useAlertHistory'
 
-/**
- * Public dashboard page — the main view of BulSU-ALAS.
- * Combines all real-time and historical components.
- * No authentication required.
- */
-export default function Dashboard() {
-  const { observation, loading: obsLoading }     = useLatestObservation()
-  const { alerts,      loading: alertsLoading }  = useAlerts()
-  const { forecast,    loading: forecastLoading } = useForecast()
+export default function Dashboard({ theme, toggleTheme }) {
+  const { observation, loading: obsLoading } = useLatestObservation()
+  const { alerts, loading: alertsLoading } = useAlerts()
+  const { forecast, loading: forecastLoading } = useForecast()
+  const { history, loading: historyLoading } = useAlertHistory()
+
+  // "+N more" link in PersistentBanner opens the AlertsPanel
+  function handleViewAll() {
+    if (typeof window !== 'undefined' && window.__alertsPanelExpand) {
+      window.__alertsPanelExpand()
+    }
+  }
 
   return (
-    <div className="page">
-      <Header observation={observation} />
+    <div className="wrapper">
+      <Header
+        observation={observation}
+        theme={theme}
+        toggleTheme={toggleTheme}
+      />
 
-      <main className="content">
-
-        {/* Active weather warnings — hidden when no alerts */}
-        <AlertBanner
+      {/* Layer 1 — persistent banner (all severities, duration-based) */}
+      {!alertsLoading && (
+        <PersistentBanner
           alerts={alerts}
-          loading={alertsLoading}
+          onViewAll={handleViewAll}
         />
+      )}
 
-        {/* All current sensor readings */}
-        <CurrentConditions
-          observation={observation}
-          loading={obsLoading}
-        />
+      {/* Layer 2 — collapsible alerts panel (active + 14-day history) */}
+      <AlertsPanel
+        activeAlerts={alerts || []}
+        history={history}
+        historyLoading={historyLoading}
+      />
 
-        {/* 4-hour ahead forecast */}
-        <ForecastStrip
-          forecast={forecast}
-          loading={forecastLoading}
-        />
+      {/* Bento grid — current conditions */}
+      <div className="section-title">CURRENT CONDITIONS</div>
+      <CurrentConditions observation={observation} loading={obsLoading} />
 
-        {/* Interactive historical trends chart */}
-        <HistoricalChart />
+      {/* 4-hour forecast */}
+      <ForecastStrip forecast={forecast} loading={forecastLoading} />
 
-      </main>
+      {/* Historical trends */}
+      <HistoricalChart />
 
       <Footer />
     </div>

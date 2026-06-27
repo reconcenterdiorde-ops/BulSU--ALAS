@@ -1,77 +1,134 @@
 import { format, parseISO } from 'date-fns'
 
-/**
- * Shows the next 4 hourly forecasts from Open-Meteo.
- * Displays temperature, rain probability, and cloud cover per hour.
- */
-
-function cloudIcon(cloudCover) {
-  if (cloudCover <= 20)  return '☀️'
-  if (cloudCover <= 50)  return '🌤️'
-  if (cloudCover <= 80)  return '🌥️'
+// ── Weather icon based on cloud cover + rain probability ──────────────────
+function weatherIcon(cloudCover, precipProb) {
+  if (precipProb >= 70) return '🌧️'
+  if (precipProb >= 40) return '🌦️'
+  if (cloudCover <= 20) return '☀️'
+  if (cloudCover <= 50) return '🌤️'
+  if (cloudCover <= 80) return '🌥️'
   return '☁️'
 }
 
-function rainIcon(prob) {
-  if (prob >= 70) return '🌧️'
-  if (prob >= 40) return '🌦️'
-  return null
+function fmt(v, d = 1) {
+  return (v === null || v === undefined) ? '—' : Number(v).toFixed(d)
+}
+
+function ForecastCard({ item, isFirst }) {
+  const time = format(parseISO(item.forecast_time), 'h:mm a')
+  const precipProb = Number(item.precip_prob ?? 0)
+  const cloudCover = Number(item.cloud_cover ?? 0)
+  const icon = weatherIcon(cloudCover, precipProb)
+
+  return (
+    <div
+      className="card"
+      style={{
+        padding: '1.2rem 1rem',
+        textAlign: 'center',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '0.6rem',
+        alignItems: 'center',
+        border: isFirst ? '1px solid rgba(59,143,255,.45)' : undefined,
+        background: isFirst ? 'rgba(59,143,255,.06)' : undefined,
+      }}
+    >
+      {/* Time label */}
+      <div style={{
+        fontFamily: "'Space Mono',monospace",
+        fontSize: '0.7rem',
+        fontWeight: 700,
+        letterSpacing: '0.08em',
+        color: isFirst ? 'var(--accent)' : 'var(--muted)',
+        textTransform: 'uppercase',
+      }}>
+        {isFirst ? 'NEXT HOUR' : time}
+      </div>
+
+      {/* Weather emoji */}
+      <div style={{ fontSize: '2rem', lineHeight: 1 }}>{icon}</div>
+
+      {/* Temperature */}
+      <div style={{
+        fontFamily: "'Space Mono',monospace",
+        fontSize: '1.5rem',
+        fontWeight: 700,
+        color: 'var(--text-bright)',
+        lineHeight: 1,
+      }}>
+        {fmt(item.temp, 1)}<span style={{ fontSize: '0.9rem', color: 'var(--muted)' }}>°C</span>
+      </div>
+
+      {/* Rain probability */}
+      <div style={{ fontSize: '0.8rem', color: 'var(--accent)', fontWeight: 500 }}>
+        💧 {precipProb}%
+      </div>
+
+      {/* Cloud cover */}
+      <div style={{ fontSize: '0.75rem', color: 'var(--muted)' }}>
+        ☁ {fmt(cloudCover, 0)}% cloud
+      </div>
+
+      {/* Precipitation amount — only show if meaningful */}
+      {item.precip_amt > 0 && (
+        <div style={{
+          fontSize: '0.72rem',
+          color: 'var(--muted)',
+          fontFamily: "'Space Mono',monospace",
+        }}>
+          {fmt(item.precip_amt, 1)} mm
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function ForecastStrip({ forecast, loading }) {
   if (loading) {
     return (
-      <div className="card">
-        <div className="card-title">4-Hour Forecast</div>
-        <div className="forecast-strip">
+      <>
+        <div className="section-title">4-HOUR FORECAST</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '1rem' }}>
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="forecast-item">
-              <div className="skeleton" style={{ width: '60%', margin: '0 auto .5rem' }} />
-              <div className="skeleton" style={{ width: '40%', height: '2rem', margin: '0 auto .5rem' }} />
-              <div className="skeleton" style={{ width: '70%', margin: '0 auto' }} />
+            <div key={i} className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
+              <div className="loading-txt" style={{ padding: '1.5rem 0', fontSize: '0.65rem' }}>
+                Loading…
+              </div>
             </div>
           ))}
         </div>
-      </div>
+      </>
     )
   }
 
-  if (forecast.length === 0) {
+  if (!forecast || forecast.length === 0) {
     return (
-      <div className="card">
-        <div className="card-title">4-Hour Forecast</div>
-        <div className="loading">No forecast data available</div>
-      </div>
+      <>
+        <div className="section-title">4-HOUR FORECAST</div>
+        <div className="loading-txt">No forecast data available</div>
+      </>
     )
   }
 
   return (
-    <div className="card">
-      <div className="card-title">4-Hour Forecast · Open-Meteo NWP Model</div>
-      <div className="forecast-strip">
-        {forecast.map((item, i) => {
-          const time       = format(parseISO(item.forecast_time), 'h:mm a')
-          const icon       = rainIcon(item.precip_prob) || cloudIcon(item.cloud_cover)
-          const isNextHour = i === 0
-
-          return (
-            <div
-              key={item.id}
-              className="forecast-item"
-              style={isNextHour ? { borderColor: '#bae6fd', background: '#f0f9ff' } : {}}
-            >
-              <div className="forecast-time">{isNextHour ? 'Next hour' : time}</div>
-              <div className="forecast-icon">{icon}</div>
-              <div className="forecast-temp">{Number(item.temp).toFixed(1)}°C</div>
-              <div className="forecast-rain">💧 {item.precip_prob}%</div>
-              <div className="forecast-cloud">☁ {item.cloud_cover}% cloud</div>
-              {item.precip_amt > 0 && (
-                <div className="forecast-cloud">{Number(item.precip_amt).toFixed(1)} mm</div>
-              )}
-            </div>
-          )
-        })}
+    <>
+      <div className="forecast-header">
+        <div className="section-title">4-HOUR FORECAST</div>
+        <div className="forecast-meta">
+          SOURCE: <span>OPEN-METEO NWP</span>
+        </div>
       </div>
-    </div>
+
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4,1fr)',
+        gap: '1rem',
+      }}>
+        {forecast.slice(0, 4).map((item, i) => (
+          <ForecastCard key={item.id} item={item} isFirst={i === 0} />
+        ))}
+      </div>
+    </>
   )
 }

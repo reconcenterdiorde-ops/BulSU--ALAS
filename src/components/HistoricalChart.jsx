@@ -1,45 +1,38 @@
 import { useState } from 'react'
 import {
-  ResponsiveContainer, LineChart, Line, XAxis, YAxis,
-  CartesianGrid, Tooltip, Legend
+  ResponsiveContainer, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend
 } from 'recharts'
 import { useHistorical } from '../hooks/useHistorical'
 
-/**
- * Interactive historical weather chart.
- * Users can switch time ranges (24h / 7d / 30d) and toggle
- * which parameters are displayed on the chart.
- */
-
 const PARAMS = [
-  { key: 'temp',     label: 'Temperature', unit: '°C',   color: '#ef4444', cls: 'temp'  },
-  { key: 'humidity', label: 'Humidity',    unit: '%',    color: '#3b82f6', cls: 'hum'   },
-  { key: 'pressure', label: 'Pressure',    unit: 'hPa',  color: '#8b5cf6', cls: 'press' },
-  { key: 'wind',     label: 'Wind',        unit: 'km/h', color: '#10b981', cls: 'wind'  },
-  { key: 'rain',     label: 'Rainfall',    unit: 'mm',   color: '#06b6d4', cls: 'rain'  },
+  { key: 'temp', label: 'Temp', unit: '°C', color: '#ef4444', cls: 'temp' },
+  { key: 'humidity', label: 'Humidity', unit: '%', color: '#3b82f6', cls: 'hum' },
+  { key: 'pressure', label: 'Pressure', unit: 'hPa', color: '#8b5cf6', cls: 'press' },
+  { key: 'wind', label: 'Wind', unit: 'km/h', color: '#00e5b0', cls: 'wind' },
+  { key: 'rain', label: 'Rainfall', unit: 'mm', color: '#06b6d4', cls: 'rain' },
 ]
 
-const TIME_RANGES = [
-  { key: '24h', label: '24h' },
-  { key: '7d',  label: '7 days' },
-  { key: '30d', label: '30 days' },
+const RANGES = [
+  { key: '24h', label: '24H' },
+  { key: '7d', label: '7 DAY' },
+  { key: '30d', label: '30 DAY' },
 ]
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload || payload.length === 0) return null
-
   return (
     <div style={{
-      background: '#fff',
-      border: '1px solid #e2e8f0',
-      borderRadius: 8,
-      padding: '.6rem .9rem',
-      fontSize: '.8rem',
-      boxShadow: '0 4px 6px rgba(0,0,0,.07)'
+      background: 'var(--surface)',
+      border: '1px solid var(--border)',
+      borderRadius: 8, padding: '.6rem .9rem',
+      fontSize: '.75rem', boxShadow: '0 4px 12px rgba(0,0,0,.3)'
     }}>
-      <div style={{ fontWeight: 600, marginBottom: '.3rem', color: '#334155' }}>{label}</div>
+      <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.65rem', color: 'var(--muted)', marginBottom: '.4rem' }}>
+        {label}
+      </div>
       {payload.map(p => (
-        <div key={p.dataKey} style={{ color: p.color, marginTop: '.15rem' }}>
+        <div key={p.dataKey} style={{ color: p.color, marginTop: '.2rem' }}>
           {p.name}: <strong>{p.value !== null ? Number(p.value).toFixed(1) : '—'}</strong>
         </div>
       ))}
@@ -48,9 +41,8 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 export default function HistoricalChart() {
-  const [timeRange,      setTimeRange]      = useState('24h')
-  const [activeParams,   setActiveParams]   = useState(['temp'])
-
+  const [timeRange, setTimeRange] = useState('24h')
+  const [activeParams, setActiveParams] = useState(['temp'])
   const { data, loading } = useHistorical(timeRange)
 
   function toggleParam(key) {
@@ -62,67 +54,65 @@ export default function HistoricalChart() {
   }
 
   return (
-    <div className="card">
-      <div className="card-title">Historical Trends</div>
+    <>
+      <div className="section-title">HISTORICAL TRENDS</div>
 
-      <div className="chart-controls">
-        {/* Time range selector */}
-        <div className="time-range-btns">
-          {TIME_RANGES.map(r => (
-            <button
-              key={r.key}
-              className={`time-btn ${timeRange === r.key ? 'active' : ''}`}
-              onClick={() => setTimeRange(r.key)}
-            >
-              {r.label}
-            </button>
-          ))}
+      <div className="card history-card">
+        <div className="chart-controls">
+          <div className="time-range-btns">
+            {RANGES.map(r => (
+              <button
+                key={r.key}
+                className={`time-btn ${timeRange === r.key ? 'active' : ''}`}
+                onClick={() => setTimeRange(r.key)}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="param-btns">
+            {PARAMS.map(p => (
+              <button
+                key={p.key}
+                className={`param-btn ${p.cls} ${activeParams.includes(p.key) ? 'active' : ''}`}
+                onClick={() => toggleParam(p.key)}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Parameter toggles */}
-        <div className="param-btns">
-          {PARAMS.map(p => (
-            <button
-              key={p.key}
-              className={`param-btn ${p.cls} ${activeParams.includes(p.key) ? 'active' : ''}`}
-              onClick={() => toggleParam(p.key)}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="loading">Loading chart data…</div>
-      ) : data.length === 0 ? (
-        <div className="loading">No historical data available for this range</div>
-      ) : (
-        <div className="chart-wrap">
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart
-              data={data}
-              margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+        {loading ? (
+          <div className="loading-txt">Loading chart data…</div>
+        ) : data.length === 0 ? (
+          <div className="loading-txt">No data available for this range</div>
+        ) : (
+          <ResponsiveContainer width="100%" height={280}>
+            <LineChart data={data} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
               <XAxis
                 dataKey="time"
-                tick={{ fontSize: 11, fill: '#94a3b8' }}
+                tick={{ fontSize: 10, fill: 'var(--muted)', fontFamily: "'Space Mono',monospace" }}
                 tickLine={false}
-                axisLine={{ stroke: '#e2e8f0' }}
+                axisLine={{ stroke: 'var(--border)' }}
                 interval="preserveStartEnd"
               />
               <YAxis
-                tick={{ fontSize: 11, fill: '#94a3b8' }}
+                tick={{ fontSize: 10, fill: 'var(--muted)', fontFamily: "'Space Mono',monospace" }}
                 tickLine={false}
                 axisLine={false}
-                width={40}
+                width={38}
               />
               <Tooltip content={<CustomTooltip />} />
               <Legend
-                wrapperStyle={{ fontSize: '.8rem', paddingTop: '.5rem' }}
+                wrapperStyle={{
+                  fontSize: '.72rem',
+                  fontFamily: "'Space Mono',monospace",
+                  paddingTop: '.5rem'
+                }}
               />
-
               {PARAMS.filter(p => activeParams.includes(p.key)).map(p => (
                 <Line
                   key={p.key}
@@ -130,23 +120,23 @@ export default function HistoricalChart() {
                   dataKey={p.key}
                   name={`${p.label} (${p.unit})`}
                   stroke={p.color}
-                  strokeWidth={2}
+                  strokeWidth={1.5}
                   dot={false}
-                  activeDot={{ r: 4 }}
+                  activeDot={{ r: 3 }}
                   connectNulls
                 />
               ))}
             </LineChart>
           </ResponsiveContainer>
-        </div>
-      )}
+        )}
 
-      <div style={{ fontSize: '.7rem', color: '#94a3b8', marginTop: '.75rem' }}>
-        {timeRange === '24h'
-          ? 'Showing raw 15-minute observations'
-          : `Showing hourly averages · ${data.length} data points`
-        }
+        <div className="chart-note">
+          {timeRange === '24h'
+            ? `RAW 15-MIN OBSERVATIONS · ${data.length} POINTS`
+            : `HOURLY AVERAGES · ${data.length} POINTS`
+          }
+        </div>
       </div>
-    </div>
+    </>
   )
 }

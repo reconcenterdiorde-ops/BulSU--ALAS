@@ -1,24 +1,16 @@
-/**
- * Site footer showing institutional partners and data attribution.
- */
 export default function Footer() {
-  const year = new Date().getFullYear()
-
   return (
-    <footer className="footer">
+    <footer>
       <div>
-        BulSU-ALAS(01) · Malolos City, Bulacan &nbsp;·&nbsp;
-        Operated by <strong style={{ color: '#94a3b8' }}>Bulacan State University</strong>
-        &nbsp;in partnership with&nbsp;
-        <strong style={{ color: '#94a3b8' }}>Bulacan DRRM Office</strong>
+        BulSU‑ALAS(01) · MALOLOS CITY, BULACAN · {new Date().getFullYear()}
       </div>
-      <div style={{ marginTop: '.3rem' }}>
-        Forecast data: Open-Meteo NWP Model &nbsp;·&nbsp;
-        Station sensor: OTT netDL 1000 &nbsp;·&nbsp;
-        Pyranometer: Kipp &amp; Zonen SMP10-A
+      <div style={{ marginTop: '.35rem', opacity: .7 }}>
+        OPERATED BY BULACAN STATE UNIVERSITY RECONNAISSANCE CENTER
+        &nbsp;·&nbsp; IN PARTNERSHIP WITH BULACAN DRRM OFFICE
       </div>
-      <div style={{ marginTop: '.3rem' }}>
-        © {year} BulSU Reconnaissance Center. All rights reserved.
+      <div style={{ marginTop: '.35rem', opacity: .5 }}>
+        SENSOR: OTT netDL 1000 · PYRANOMETER: KIPP &amp; ZONEN SMP10‑A
+        &nbsp;·&nbsp; FORECAST: OPEN‑METEO NWP · DATA: SUPABASE REAL‑TIME
       </div>
     </footer>
   )
