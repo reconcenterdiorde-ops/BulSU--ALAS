@@ -1,5 +1,7 @@
 import { Sun, Moon } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
+import bulsuLogo from '../assets/images/bulsu-logo.png'
+import reconLogo from '../assets/images/recon-logo.png'
 
 export default function Header({ observation, theme, toggleTheme }) {
   const isLive = !!observation
@@ -12,8 +14,8 @@ export default function Header({ observation, theme, toggleTheme }) {
       <div className="header-top">
         <div className="header-left">
           {/* Station logos — replace src with your actual logo paths */}
-          <img src="/bulsu-logo.png" alt="BulSU" onError={e => e.target.style.display = 'none'} />
-          <img src="/drrm-logo.png" alt="DRRM" onError={e => e.target.style.display = 'none'} />
+          <img src={bulsuLogo} alt="BulSU" onError={e => e.target.style.display = 'none'} />
+          <img src={reconLogo} alt="DRRM" onError={e => e.target.style.display = 'none'} />
 
           <div className="title-divider" />
 
