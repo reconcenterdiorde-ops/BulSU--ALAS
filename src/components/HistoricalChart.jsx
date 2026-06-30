@@ -3,6 +3,7 @@ import {
   ResponsiveContainer, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend
 } from 'recharts'
+import { format, parseISO } from 'date-fns'
 import { useHistorical } from '../hooks/useHistorical'
 
 const PARAMS = [
@@ -18,6 +19,37 @@ const RANGES = [
   { key: '7d', label: '7 DAY' },
   { key: '30d', label: '30 DAY' },
 ]
+
+// ── X-axis tick spacing ───────────────────────────────────────────────────
+// BUGFIX (overlapping timestamps): the previous interval="preserveStartEnd"
+// is a Recharts heuristic that does NOT reliably prevent overlap once data
+// gets dense — 24h has up to 96 points, 7d up to 168, 30d up to 720. With
+// that many category ticks, the heuristic frequently undershoots and labels
+// stack on top of each other.
+//
+// Fix: explicitly target a fixed, readable number of visible ticks per range
+// and compute the Recharts `interval` (ticks to SKIP between shown ticks)
+// from the ACTUAL data length, so spacing stays even and non-overlapping
+// no matter how many points are returned (including sparse/gappy data).
+const TICK_TARGETS = { '24h': 8, '7d': 7, '30d': 10 }
+
+function calcTickInterval(dataLength, targetTicks) {
+  if (dataLength <= targetTicks) return 0 // few enough points — show them all
+  return Math.ceil(dataLength / targetTicks) - 1
+}
+
+// Ticks render compact labels; the tooltip still shows full precision via
+// each row's `fullTime` field, so no information is lost by shortening ticks.
+function formatTick(value, index, timeRange, data) {
+  if (timeRange === '24h') return value // "HH:mm" is already compact
+
+  const row = data[index]
+  if (!row?.fullTime) return value
+
+  // 7-day ticks were "MM/dd HH:mm" (11 chars) — too wide once several are
+  // visible side by side. Shorten to a clean date-only label for the axis.
+  return format(parseISO(row.fullTime), 'MMM d')
+}
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload || payload.length === 0) return null
@@ -97,7 +129,9 @@ export default function HistoricalChart() {
                 tick={{ fontSize: 10, fill: 'var(--muted)', fontFamily: "'Space Mono',monospace" }}
                 tickLine={false}
                 axisLine={{ stroke: 'var(--border)' }}
-                interval="preserveStartEnd"
+                interval={calcTickInterval(data.length, TICK_TARGETS[timeRange])}
+                tickFormatter={(value, index) => formatTick(value, index, timeRange, data)}
+                minTickGap={24}
               />
               <YAxis
                 tick={{ fontSize: 10, fill: 'var(--muted)', fontFamily: "'Space Mono',monospace" }}
