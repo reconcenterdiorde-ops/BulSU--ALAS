@@ -5,7 +5,7 @@ export default function Footer() {
         BulSU‑ALAS(01) · MALOLOS CITY, BULACAN · {new Date().getFullYear()}
       </div>
       <div style={{ marginTop: '.35rem', opacity: .7 }}>
-        OPERATED BY BULACAN STATE UNIVERSITY RECONNAISSANCE CENTER
+        OPERATED BY BULACAN STATE UNIVERSITY · RECON CENTER
         &nbsp;·&nbsp; IN PARTNERSHIP WITH BULACAN DRRM OFFICE
       </div>
       <div style={{ marginTop: '.35rem', opacity: .5 }}>
