@@ -267,8 +267,14 @@ export default function AlertsPanel({ activeAlerts, history, historyLoading, def
                             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
                                 <thead>
                                     <tr>
-                                        {['Date & Time', 'Alert Type', 'Severity', 'Value', 'Message'].map(h => (
-                                            <th key={h} style={{
+                                        {[
+                                            { label: 'Date & Time', cls: '' },
+                                            { label: 'Alert Type', cls: '' },
+                                            { label: 'Severity', cls: '' },
+                                            { label: 'Value', cls: '' },
+                                            { label: 'Message', cls: 'alert-hist-message' },
+                                        ].map(({ label, cls }) => (
+                                            <th key={label} className={cls} style={{
                                                 textAlign: 'left', padding: '0.4rem 0.6rem',
                                                 fontFamily: "'Space Mono',monospace",
                                                 fontSize: '0.55rem', fontWeight: 700,
@@ -276,7 +282,7 @@ export default function AlertsPanel({ activeAlerts, history, historyLoading, def
                                                 color: 'var(--muted)',
                                                 borderBottom: '1px solid var(--border)'
                                             }}>
-                                                {h}
+                                                {label}
                                             </th>
                                         ))}
                                     </tr>
@@ -311,7 +317,7 @@ export default function AlertsPanel({ activeAlerts, history, historyLoading, def
                                             }}>
                                                 {alert.value}
                                             </td>
-                                            <td style={{
+                                            <td className="alert-hist-message" style={{
                                                 padding: '0.45rem 0.6rem',
                                                 fontSize: '0.72rem', color: 'var(--muted)'
                                             }}>
