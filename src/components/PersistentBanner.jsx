@@ -46,12 +46,11 @@ function sevStyle(sev) {
 function ageLabel(ts) {
     const min = Math.floor((Date.now() - new Date(ts)) / 60000)
     if (min < 1) return 'just now'
-    if (min < 60) return `${min} min ago`
-    return `${Math.floor(min / 60)} hr ago`
+    if (min < 60) return `${min}m ago`
+    return `${Math.floor(min / 60)}h ago`
 }
 
 export default function PersistentBanner({ alerts, onViewAll }) {
-    // Re-evaluate every 60 s so expired low-severity banners auto-remove
     const [, tick] = useState(0)
     useEffect(() => {
         const t = setInterval(() => tick(n => n + 1), 60000)
@@ -60,7 +59,6 @@ export default function PersistentBanner({ alerts, onViewAll }) {
 
     if (!alerts || alerts.length === 0) return null
 
-    // Deduplicate by alert_type, filter by duration, sort by severity
     const seen = new Set()
     const visible = alerts
         .filter(a => isBannerActive(a))
@@ -81,64 +79,42 @@ export default function PersistentBanner({ alerts, onViewAll }) {
     const extras = visible.length - MAX_STACK
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '0.9rem' }}>
+        <div className="banner-stack">
             {shown.map(alert => {
                 const s = sevStyle(alert.severity)
                 return (
                     <div
                         key={alert.id}
+                        className={`banner-item${s.flash ? ' banner-flash' : ''}`}
                         style={{
-                            display: 'flex', alignItems: 'center', gap: '0.75rem',
-                            padding: '0.7rem 1.1rem',
-                            borderRadius: 'var(--radius)',
                             borderLeft: `4px solid ${s.border}`,
                             background: s.bg,
-                            animation: s.flash ? 'flashBg .85s ease-in-out infinite alternate' : undefined,
                         }}
                     >
-                        <span style={{ fontSize: '1rem', flexShrink: 0 }}>{s.icon}</span>
+                        {/* ── Top row: always visible ── */}
+                        <div className="banner-top">
+                            <span className="banner-icon">{s.icon}</span>
+                            <span className="banner-type" style={{ color: s.color }}>
+                                {alert.alert_type}
+                            </span>
+                            <span className="banner-value" style={{ color: s.color }}>
+                                {alert.value}
+                            </span>
+                            <span className="banner-age">
+                                {ageLabel(alert.alerted_at)}
+                            </span>
+                        </div>
 
-                        <span style={{
-                            fontFamily: "'Space Mono',monospace",
-                            fontSize: '0.66rem', fontWeight: 700,
-                            letterSpacing: '0.1em', color: s.color,
-                            whiteSpace: 'nowrap'
-                        }}>
-                            {alert.alert_type}
-                        </span>
-
-                        <span style={{ flex: 1, fontSize: '0.8rem', color: 'var(--text)' }}>
+                        {/* ── Message row: truncated on mobile, full on desktop ── */}
+                        <div className="banner-msg">
                             {alert.message}
-                        </span>
-
-                        <span style={{
-                            fontFamily: "'Space Mono',monospace",
-                            fontSize: '0.7rem', fontWeight: 700,
-                            color: s.color, whiteSpace: 'nowrap'
-                        }}>
-                            {alert.value}
-                        </span>
-
-                        <span style={{
-                            fontFamily: "'Space Mono',monospace",
-                            fontSize: '0.6rem', color: 'var(--muted)',
-                            whiteSpace: 'nowrap'
-                        }}>
-                            {ageLabel(alert.alerted_at)}
-                        </span>
+                        </div>
                     </div>
                 )
             })}
 
             {extras > 0 && (
-                <button
-                    onClick={onViewAll}
-                    style={{
-                        background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
-                        fontFamily: "'Space Mono',monospace", fontSize: '0.62rem',
-                        color: 'var(--accent)', paddingLeft: '1.1rem', letterSpacing: '0.06em',
-                    }}
-                >
+                <button className="banner-more" onClick={onViewAll}>
                     +{extras} more active alert{extras > 1 ? 's' : ''} — view all ↓
                 </button>
             )}
