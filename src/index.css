@@ -909,56 +909,243 @@ footer {
   padding: 2rem;
 }
 
-/* ── RESPONSIVE ── */
-@media (max-width: 1024px) {
+/* ── PERSISTENT ALERT BANNER ─────────────────────────────────────────────── */
+.banner-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.9rem;
+}
+
+.banner-item {
+  border-radius: var(--radius);
+  padding: 0.6rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+@keyframes flashBg {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0.6;
+  }
+}
+
+.banner-flash {
+  animation: flashBg .85s ease-in-out infinite alternate;
+}
+
+.banner-top {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: nowrap;
+}
+
+.banner-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.banner-type {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.banner-value {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  margin-left: auto;
+  /* push value + age to the right */
+  flex-shrink: 0;
+}
+
+.banner-age {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.banner-msg {
+  font-size: 0.78rem;
+  color: var(--text);
+  padding-left: 1.6rem;
+  /* indent under icon */
+  line-height: 1.4;
+  /* Desktop: show full message */
+  display: block;
+}
+
+.banner-more {
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: 'Space Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--accent);
+  padding-left: 1.1rem;
+  letter-spacing: 0.06em;
+}
+
+/* ── BENTO GRID — responsive layout ──────────────────────────────────────────
+   The bento grid MUST be a CSS class (not inline styles) so media queries work.
+   Three breakpoints:
+     Desktop  ≥1024px  full 4-col bento with named areas
+     Tablet   640–1023px  2-col, temp spans full width
+     Mobile   <640px    single column, all tiles stacked
+   ─────────────────────────────────────────────────────────────────────────── */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: auto auto auto;
+  grid-template-areas:
+    "te te wi ra"
+    "te te hm hm"
+    "pr pr so vo";
+  gap: 1rem;
+}
+
+/* Wind tile inner sub-grid — 3 equal columns on desktop */
+.wind-sub-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.3rem;
+  align-items: start;
+}
+
+/* ── TABLET ≤1023px ── */
+@media (max-width: 1023px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    grid-template-areas:
+      "te te"
+      "wi ra"
+      "hm hm"
+      "pr pr"
+      "so vo";
+  }
+
   .forecast-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
-@media (max-width: 768px) {
-  .top-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .temp-hero {
-    grid-row: auto;
-  }
-
-  .mid-grid {
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 0.9rem;
-  }
-
-  .forecast-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.8rem;
-  }
-}
-
-@media (max-width: 600px) {
+/* ── MOBILE ≤639px ── */
+@media (max-width: 639px) {
   .wrapper {
-    padding: 1.2rem 1rem;
+    padding: 1rem 0.75rem;
   }
 
-  .title-main {
-    font-size: clamp(1.4rem, 7vw, 1.8rem);
+  /* Banner: message truncated to 1 line on mobile to prevent wall of text */
+  .banner-msg {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 0.72rem;
+    padding-left: 0;
   }
 
-  .mid-grid {
+  /* Age hidden on mobile — value already shows severity numerically */
+  .banner-age {
+    display: none;
+  }
+
+  .bento-grid {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "te"
+      "wi"
+      "ra"
+      "hm"
+      "pr"
+      "so"
+      "vo";
+    gap: 0.75rem;
   }
 
+  /* Wind sub-grid: stack to 3 compact cols on small screen */
+  .wind-sub-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.2rem;
+  }
+
+  /* Header: compress on small screens */
+  .title-main {
+    font-size: clamp(1.2rem, 6vw, 1.6rem);
+  }
+
+  .title-sub-line1,
+  .title-sub-line2 {
+    display: none;
+  }
+
+  /* hide coordinate line on phone */
+  .header-left img {
+    width: 38px;
+    height: 38px;
+  }
+
+  .title-divider {
+    display: none;
+  }
+
+  /* Forecast: horizontal scroll strip */
   .forecast-grid {
-    grid-template-columns: repeat(8, 75vw);
+    grid-template-columns: repeat(4, 80vw);
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch;
     padding-bottom: 0.5rem;
+    gap: 0.75rem;
   }
 
-  .fc-card {
+  .forecast-grid>* {
     scroll-snap-align: start;
-    min-width: 75vw;
+  }
+
+  .forecast-scroll-hint {
+    display: block;
+  }
+
+  /* Alert panel history table — hide less important columns */
+  .alert-hist-duration {
+    display: none;
+  }
+
+  .alert-hist-message {
+    display: none;
+  }
+
+  /* Alerts panel: tighter max height on mobile */
+  .alerts-panel-body {
+    max-height: 55vh !important;
+  }
+
+  /* Chart param buttons wrap to two rows */
+  .param-btns {
+    gap: 0.35rem;
+  }
+
+  .param-btn {
+    padding: 0.25rem 0.55rem;
+    font-size: 0.65rem;
+  }
+
+  .time-btn {
+    padding: 0.25rem 0.55rem;
+    font-size: 0.65rem;
   }
 }

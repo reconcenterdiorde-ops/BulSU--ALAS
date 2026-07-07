@@ -7,8 +7,6 @@ const SEV_ORDER = [
     'MODERATE', 'CAUTION', 'HEAVY', 'LOW'
 ]
 
-const PAGE_SIZE = 10
-
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function sevStyle(sev) {
     const s = (sev || '').toUpperCase()
@@ -66,28 +64,21 @@ function exportCSV(history) {
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function AlertsPanel({ activeAlerts, history, historyLoading, defaultExpanded }) {
     const [expanded, setExpanded] = useState(defaultExpanded || false)
-    const [page, setPage] = useState(0)
     const panelRef = useRef(null)
 
     const hasActive = activeAlerts && activeAlerts.length > 0
     const total = history?.length || 0
-    const totalPages = Math.ceil(total / PAGE_SIZE)
-    const paged = (history || []).slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
 
-    // Allow parent PersistentBanner's "+N more" to open this panel
-    // by exposing expand() via ref — handled by Dashboard passing a callback instead
     function handleToggle() {
         setExpanded(e => !e)
-        setPage(0)
     }
 
     function handleExpand() {
         setExpanded(true)
-        setPage(0)
         setTimeout(() => panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
     }
 
-    // Expose handleExpand via DOM for PersistentBanner's "view all" link
+    // Expose handleExpand for PersistentBanner "+N more" link
     if (typeof window !== 'undefined') {
         window.__alertsPanelExpand = handleExpand
     }
@@ -102,7 +93,7 @@ export default function AlertsPanel({ activeAlerts, history, historyLoading, def
                 marginBottom: '1.25rem'
             }}
         >
-            {/* ── Header ── */}
+            {/* ── Clickable header — always visible ── */}
             <div
                 onClick={handleToggle}
                 style={{
@@ -112,7 +103,7 @@ export default function AlertsPanel({ activeAlerts, history, historyLoading, def
                     cursor: 'pointer', userSelect: 'none',
                 }}
             >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '0.9rem' }}>{hasActive ? '🔔' : '🔕'}</span>
 
                     <span style={{
@@ -162,15 +153,28 @@ export default function AlertsPanel({ activeAlerts, history, historyLoading, def
                     fontSize: '0.65rem', color: 'var(--muted)',
                     display: 'inline-block',
                     transition: 'transform 0.2s',
-                    transform: expanded ? 'rotate(180deg)' : 'none'
+                    transform: expanded ? 'rotate(180deg)' : 'none',
+                    flexShrink: 0,
                 }}>▼</span>
             </div>
 
-            {/* ── Expanded body ── */}
+            {/* ── Expanded body — scrollable, capped at 60vh ──
+          The header stays fixed above; only this body scrolls.
+          On mobile this is reduced to 55vh via the media query in index.css. ── */}
             {expanded && (
-                <div style={{ background: 'var(--bg)', padding: '0 1.1rem 1.1rem' }}>
-
-                    {/* Active alerts */}
+                <div
+                    className="alerts-panel-body"
+                    style={{
+                        background: 'var(--bg)',
+                        padding: '0 1.1rem 1.1rem',
+                        maxHeight: '60vh',
+                        overflowY: 'auto',
+                        overflowX: 'hidden',
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: 'var(--border) transparent',
+                    }}
+                >
+                    {/* ── Active alerts ── */}
                     <SubLabel>Active — last 3 hours</SubLabel>
 
                     {!hasActive ? (
@@ -195,7 +199,8 @@ export default function AlertsPanel({ activeAlerts, history, historyLoading, def
                                         <div key={alert.id} style={{
                                             display: 'flex', alignItems: 'center', gap: '0.65rem',
                                             padding: '0.55rem 0.75rem', borderRadius: 8,
-                                            background: bg, border: `1px solid ${color}33`
+                                            background: bg, border: `1px solid ${color}33`,
+                                            flexWrap: 'wrap',
                                         }}>
                                             <SevBadge severity={alert.severity} />
                                             <span style={{
@@ -204,13 +209,12 @@ export default function AlertsPanel({ activeAlerts, history, historyLoading, def
                                             }}>
                                                 {alert.alert_type}
                                             </span>
-                                            <span style={{ flex: 1, fontSize: '0.78rem', color: 'var(--text)' }}>
+                                            <span style={{ flex: 1, fontSize: '0.78rem', color: 'var(--text)', minWidth: '120px' }}>
                                                 {alert.message}
                                             </span>
                                             <span style={{
                                                 fontFamily: "'Space Mono',monospace",
-                                                fontSize: '0.7rem', fontWeight: 700, color,
-                                                whiteSpace: 'nowrap'
+                                                fontSize: '0.7rem', fontWeight: 700, color, whiteSpace: 'nowrap'
                                             }}>
                                                 {alert.value}
                                             </span>
@@ -226,7 +230,7 @@ export default function AlertsPanel({ activeAlerts, history, historyLoading, def
                         </div>
                     )}
 
-                    {/* History */}
+                    {/* ── History table ── */}
                     <div style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         borderTop: '1px solid var(--border)', marginTop: '0.9rem',
@@ -263,110 +267,84 @@ export default function AlertsPanel({ activeAlerts, history, historyLoading, def
                             No alerts recorded in the last 14 days
                         </div>
                     ) : (
-                        <>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
-                                <thead>
-                                    <tr>
-                                        {[
-                                            { label: 'Date & Time', cls: '' },
-                                            { label: 'Alert Type', cls: '' },
-                                            { label: 'Severity', cls: '' },
-                                            { label: 'Value', cls: '' },
-                                            { label: 'Message', cls: 'alert-hist-message' },
-                                        ].map(({ label, cls }) => (
-                                            <th key={label} className={cls} style={{
-                                                textAlign: 'left', padding: '0.4rem 0.6rem',
-                                                fontFamily: "'Space Mono',monospace",
-                                                fontSize: '0.55rem', fontWeight: 700,
-                                                letterSpacing: '0.1em', textTransform: 'uppercase',
-                                                color: 'var(--muted)',
-                                                borderBottom: '1px solid var(--border)'
-                                            }}>
-                                                {label}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {paged.map((alert, idx) => (
-                                        <tr key={alert.id} style={{
-                                            borderBottom: idx < paged.length - 1 ? '1px solid var(--border)' : 'none'
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.75rem' }}>
+                            <thead>
+                                <tr>
+                                    {[
+                                        { label: 'Date & Time', cls: '' },
+                                        { label: 'Alert Type', cls: '' },
+                                        { label: 'Severity', cls: '' },
+                                        { label: 'Value', cls: '' },
+                                        { label: 'Message', cls: 'alert-hist-message' },
+                                    ].map(({ label, cls }) => (
+                                        <th key={label} className={cls} style={{
+                                            textAlign: 'left', padding: '0.4rem 0.6rem',
+                                            fontFamily: "'Space Mono',monospace",
+                                            fontSize: '0.55rem', fontWeight: 700,
+                                            letterSpacing: '0.1em', textTransform: 'uppercase',
+                                            color: 'var(--muted)',
+                                            borderBottom: '1px solid var(--border)',
+                                            background: 'var(--bg)', // keeps header visible while scrolling
+                                            position: 'sticky', top: 0, zIndex: 1,
                                         }}>
-                                            <td style={{
-                                                padding: '0.45rem 0.6rem',
-                                                fontFamily: "'Space Mono',monospace",
-                                                fontSize: '0.63rem', color: 'var(--muted)', whiteSpace: 'nowrap'
-                                            }}>
-                                                {format(parseISO(alert.alerted_at), 'MMM d, yyyy HH:mm')}
-                                            </td>
-                                            <td style={{
-                                                padding: '0.45rem 0.6rem',
-                                                fontFamily: "'Space Mono',monospace",
-                                                fontSize: '0.65rem', color: 'var(--text)'
-                                            }}>
-                                                {alert.alert_type}
-                                            </td>
-                                            <td style={{ padding: '0.45rem 0.6rem' }}>
-                                                <SevBadge severity={alert.severity} />
-                                            </td>
-                                            <td style={{
-                                                padding: '0.45rem 0.6rem',
-                                                fontFamily: "'Space Mono',monospace",
-                                                fontSize: '0.65rem', fontWeight: 700,
-                                                color: 'var(--text-bright)'
-                                            }}>
-                                                {alert.value}
-                                            </td>
-                                            <td className="alert-hist-message" style={{
-                                                padding: '0.45rem 0.6rem',
-                                                fontSize: '0.72rem', color: 'var(--muted)'
-                                            }}>
-                                                {alert.message}
-                                            </td>
-                                        </tr>
+                                            {label}
+                                        </th>
                                     ))}
-                                </tbody>
-                            </table>
-
-                            {/* Pagination */}
-                            {totalPages > 1 && (
-                                <div style={{
-                                    display: 'flex', alignItems: 'center',
-                                    justifyContent: 'space-between',
-                                    marginTop: '0.75rem', paddingTop: '0.65rem',
-                                    borderTop: '1px solid var(--border)'
-                                }}>
-                                    <span style={{
-                                        fontFamily: "'Space Mono',monospace",
-                                        fontSize: '0.6rem', color: 'var(--muted)'
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {(history || []).map((alert, idx) => (
+                                    <tr key={alert.id} style={{
+                                        borderBottom: idx < total - 1 ? '1px solid var(--border)' : 'none'
                                     }}>
-                                        Showing {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of {total}
-                                    </span>
-                                    <div style={{ display: 'flex', gap: '0.4rem' }}>
-                                        {[['← Prev', page === 0, () => setPage(p => p - 1)],
-                                        ['Next →', page >= totalPages - 1, () => setPage(p => p + 1)]
-                                        ].map(([label, disabled, onClick]) => (
-                                            <button
-                                                key={label}
-                                                onClick={e => { e.stopPropagation(); onClick() }}
-                                                disabled={disabled}
-                                                style={{
-                                                    fontFamily: "'Space Mono',monospace",
-                                                    fontSize: '0.6rem', padding: '0.2rem 0.65rem',
-                                                    borderRadius: 6, border: '1px solid var(--border)',
-                                                    background: 'var(--surface)',
-                                                    color: disabled ? 'var(--muted)' : 'var(--text)',
-                                                    cursor: disabled ? 'default' : 'pointer',
-                                                    opacity: disabled ? 0.5 : 1,
-                                                }}
-                                            >
-                                                {label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </>
+                                        <td style={{
+                                            padding: '0.45rem 0.6rem',
+                                            fontFamily: "'Space Mono',monospace",
+                                            fontSize: '0.63rem', color: 'var(--muted)', whiteSpace: 'nowrap'
+                                        }}>
+                                            {format(parseISO(alert.alerted_at), 'MMM d, yyyy HH:mm')}
+                                        </td>
+                                        <td style={{
+                                            padding: '0.45rem 0.6rem',
+                                            fontFamily: "'Space Mono',monospace",
+                                            fontSize: '0.65rem', color: 'var(--text)'
+                                        }}>
+                                            {alert.alert_type}
+                                        </td>
+                                        <td style={{ padding: '0.45rem 0.6rem' }}>
+                                            <SevBadge severity={alert.severity} />
+                                        </td>
+                                        <td style={{
+                                            padding: '0.45rem 0.6rem',
+                                            fontFamily: "'Space Mono',monospace",
+                                            fontSize: '0.65rem', fontWeight: 700,
+                                            color: 'var(--text-bright)'
+                                        }}>
+                                            {alert.value}
+                                        </td>
+                                        <td className="alert-hist-message" style={{
+                                            padding: '0.45rem 0.6rem',
+                                            fontSize: '0.72rem', color: 'var(--muted)'
+                                        }}>
+                                            {alert.message}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    )}
+
+                    {/* Row count footer */}
+                    {total > 0 && (
+                        <div style={{
+                            fontFamily: "'Space Mono',monospace",
+                            fontSize: '0.58rem', color: 'var(--muted)',
+                            paddingTop: '0.65rem', marginTop: '0.5rem',
+                            borderTop: '1px solid var(--border)',
+                            textAlign: 'right'
+                        }}>
+                            {total} alert{total > 1 ? 's' : ''} total · scroll to view all
+                        </div>
                     )}
                 </div>
             )}

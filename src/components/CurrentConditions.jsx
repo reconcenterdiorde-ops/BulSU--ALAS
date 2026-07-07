@@ -161,7 +161,7 @@ function TileWind({ o }) {
   return (
     <Tile area="wi">
       <TileLabel>Wind</TileLabel>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.3rem', alignItems: 'start' }}>
+      <div className="wind-sub-grid">
         {[
           { lbl: 'AVG', val: fmt(avg, 1), color: 'var(--text-bright)' },
           { lbl: 'GUST', val: fmt(max, 1), color: 'var(--warn)' },
@@ -269,22 +269,18 @@ function SkeletonTile({ area, tall }) {
 }
 
 // ── Main export — bento grid ──────────────────────────────────────────────────
-// CSS grid-template-areas layout:
-//   "te te wi ra"   Temperature (2×2 hero) | Wind | Rainfall
-//   "te te hm hm"   Temperature continued  | Humidity (2×1 wide)
-//   "pr pr so  vo"  Pressure (2×1 wide)    | Solar  | Voltage
-const GRID = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(4,1fr)',
-  gridTemplateRows: 'auto auto auto',
-  gridTemplateAreas: '"te te wi ra" "te te hm hm" "pr pr so vo"',
-  gap: '1rem',
-}
+// Layout is controlled by the .bento-grid CSS class in index.css so that
+// media queries can override grid-template-areas at each breakpoint.
+// Inline styles cannot respond to media queries — that was the overlap bug.
+//
+// Desktop  ≥1024px: "te te wi ra" / "te te hm hm" / "pr pr so vo"
+// Tablet   640-1023px: 2 columns, temp spans full width
+// Mobile   <640px:   single column, all tiles stacked
 
 export default function CurrentConditions({ observation, loading }) {
   if (loading) {
     return (
-      <div style={GRID}>
+      <div className="bento-grid">
         <SkeletonTile area="te" tall />
         <SkeletonTile area="wi" />
         <SkeletonTile area="ra" />
@@ -298,7 +294,7 @@ export default function CurrentConditions({ observation, loading }) {
 
   const o = observation || {}
   return (
-    <div style={GRID}>
+    <div className="bento-grid">
       <TileTemp o={o} />
       <TileWind o={o} />
       <TileRainfall o={o} />
