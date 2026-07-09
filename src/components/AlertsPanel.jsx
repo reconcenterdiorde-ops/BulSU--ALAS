@@ -174,6 +174,50 @@ export default function AlertsPanel({ activeAlerts, history, historyLoading, def
                         scrollbarColor: 'var(--border) transparent',
                     }}
                 >
+                    {/* ── Top toolbar — always visible at the top of the scroll area ── */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '0.65rem 0',
+                        borderBottom: '1px solid var(--border)',
+                        marginBottom: '0.1rem',
+                        position: 'sticky',
+                        top: 0,
+                        background: 'var(--bg)',
+                        zIndex: 2,
+                    }}>
+                        <span style={{
+                            fontFamily: "'Space Mono',monospace",
+                            fontSize: '0.58rem',
+                            color: 'var(--muted)',
+                            letterSpacing: '0.04em',
+                        }}>
+                            {total > 0
+                                ? `${total} alert${total > 1 ? 's' : ''} · last 14 days`
+                                : 'No alert history'
+                            }
+                        </span>
+                        <button
+                            onClick={e => { e.stopPropagation(); exportCSV(history) }}
+                            disabled={total === 0}
+                            style={{
+                                fontFamily: "'Space Mono',monospace",
+                                fontSize: '0.6rem',
+                                fontWeight: 700,
+                                color: total > 0 ? 'var(--accent)' : 'var(--muted)',
+                                border: `1px solid ${total > 0 ? 'var(--accent)' : 'var(--border)'}`,
+                                background: 'transparent',
+                                padding: '0.2rem 0.65rem',
+                                borderRadius: 6,
+                                cursor: total > 0 ? 'pointer' : 'default',
+                                letterSpacing: '0.06em',
+                                opacity: total > 0 ? 1 : 0.5,
+                            }}
+                        >
+                            ↓ EXPORT CSV
+                        </button>
+                    </div>
                     {/* ── Active alerts ── */}
                     <SubLabel>Active — last 3 hours</SubLabel>
 
@@ -232,8 +276,6 @@ export default function AlertsPanel({ activeAlerts, history, historyLoading, def
 
                     {/* ── History table ── */}
                     <div style={{
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        borderTop: '1px solid var(--border)', marginTop: '0.9rem',
                         padding: '0.85rem 0 0.45rem',
                     }}>
                         <span style={{
@@ -244,18 +286,6 @@ export default function AlertsPanel({ activeAlerts, history, historyLoading, def
                         }}>
                             History — last 14 days
                         </span>
-                        <button
-                            onClick={e => { e.stopPropagation(); exportCSV(history) }}
-                            style={{
-                                fontFamily: "'Space Mono',monospace",
-                                fontSize: '0.6rem', fontWeight: 700,
-                                color: 'var(--accent)', border: '1px solid var(--accent)',
-                                background: 'transparent', padding: '0.2rem 0.65rem',
-                                borderRadius: 6, cursor: 'pointer', letterSpacing: '0.06em',
-                            }}
-                        >
-                            ↓ EXPORT CSV
-                        </button>
                     </div>
 
                     {historyLoading ? (
