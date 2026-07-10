@@ -1,4 +1,4 @@
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, formatDistanceToNow } from 'date-fns'
 
 // ── Weather icon based on cloud cover + rain probability ──────────────────
 function weatherIcon(cloudCover, precipProb) {
@@ -111,12 +111,22 @@ export default function ForecastStrip({ forecast, loading }) {
     )
   }
 
+  // Derive when the forecast was fetched from the earliest card's created_at
+  const fetchedAt = forecast[0]?.created_at
+    ? formatDistanceToNow(parseISO(forecast[0].created_at), { addSuffix: true })
+    : null
+
   return (
     <>
       <div className="forecast-header">
         <div className="section-title">4-HOUR FORECAST</div>
         <div className="forecast-meta">
           SOURCE: <span>OPEN-METEO NWP</span>
+          {fetchedAt && (
+            <span style={{ color: 'var(--muted)', fontWeight: 400, marginLeft: '0.5rem' }}>
+              · fetched {fetchedAt}
+            </span>
+          )}
         </div>
       </div>
 

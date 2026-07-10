@@ -51,25 +51,40 @@ function formatTick(value, index, timeRange, data) {
   return format(parseISO(row.fullTime), 'MMM d')
 }
 
-function CustomTooltip({ active, payload, label }) {
-  if (!active || !payload || payload.length === 0) return null
-  return (
-    <div style={{
-      background: 'var(--surface)',
-      border: '1px solid var(--border)',
-      borderRadius: 8, padding: '.6rem .9rem',
-      fontSize: '.75rem', boxShadow: '0 4px 12px rgba(0,0,0,.3)'
-    }}>
-      <div style={{ fontFamily: "'Space Mono',monospace", fontSize: '.65rem', color: 'var(--muted)', marginBottom: '.4rem' }}>
-        {label}
-      </div>
-      {payload.map(p => (
-        <div key={p.dataKey} style={{ color: p.color, marginTop: '.2rem' }}>
-          {p.name}: <strong>{p.value !== null ? Number(p.value).toFixed(1) : '—'}</strong>
+// CustomTooltip receives the short axis `label` (e.g. "14:00" or "Jul 6")
+// but the full ISO timestamp is stored in each data row's `fullTime` field.
+// We pass `data` via closure so the tooltip can look up the full timestamp.
+function makeTooltip(data) {
+  return function CustomTooltip({ active, payload, label }) {
+    if (!active || !payload || payload.length === 0) return null
+
+    // Find the row matching this label to get the fullTime
+    const row = data.find(d => d.time === label)
+    const fullTime = row?.fullTime
+      ? format(parseISO(row.fullTime), 'MMM d, yyyy  HH:mm')
+      : label
+
+    return (
+      <div style={{
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 8, padding: '.6rem .9rem',
+        fontSize: '.75rem', boxShadow: '0 4px 12px rgba(0,0,0,.3)'
+      }}>
+        <div style={{
+          fontFamily: "'Space Mono',monospace",
+          fontSize: '.65rem', color: 'var(--muted)', marginBottom: '.4rem'
+        }}>
+          {fullTime}
         </div>
-      ))}
-    </div>
-  )
+        {payload.map(p => (
+          <div key={p.dataKey} style={{ color: p.color, marginTop: '.2rem' }}>
+            {p.name}: <strong>{p.value !== null ? Number(p.value).toFixed(1) : '—'}</strong>
+          </div>
+        ))}
+      </div>
+    )
+  }
 }
 
 export default function HistoricalChart() {
@@ -139,7 +154,7 @@ export default function HistoricalChart() {
                 axisLine={false}
                 width={38}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={makeTooltip(data)} />
               <Legend
                 wrapperStyle={{
                   fontSize: '.72rem',

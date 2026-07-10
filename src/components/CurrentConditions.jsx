@@ -153,27 +153,90 @@ function TileTemp({ o }) {
   )
 }
 
+function CompassRose({ deg }) {
+  // deg is meteorological wind direction (where wind comes FROM)
+  // Arrow points in the direction the wind is blowing TO
+  const rotateDeg = deg !== null ? deg : 0
+  const hasData = deg !== null
+
+  return (
+    <svg
+      width="52" height="52" viewBox="0 0 52 52"
+      aria-label={deg !== null ? `Wind direction: ${deg}°` : 'No wind direction data'}
+      style={{ flexShrink: 0 }}
+    >
+      {/* Outer ring */}
+      <circle cx="26" cy="26" r="24"
+        fill="none"
+        stroke="var(--border)"
+        strokeWidth="1"
+      />
+      {/* Cardinal tick marks */}
+      {[0, 90, 180, 270].map(a => {
+        const rad = (a - 90) * Math.PI / 180
+        return (
+          <line key={a}
+            x1={26 + 20 * Math.cos(rad)} y1={26 + 20 * Math.sin(rad)}
+            x2={26 + 24 * Math.cos(rad)} y2={26 + 24 * Math.sin(rad)}
+            stroke="var(--muted)" strokeWidth="1.5"
+          />
+        )
+      })}
+      {/* N label */}
+      <text x="26" y="9"
+        textAnchor="middle" dominantBaseline="middle"
+        fontSize="7" fontWeight="700"
+        fill="var(--muted)"
+        fontFamily="'Space Mono',monospace"
+      >N</text>
+      {/* Direction arrow — rotates around center */}
+      <g transform={`rotate(${rotateDeg}, 26, 26)`} opacity={hasData ? 1 : 0.2}>
+        {/* Arrow head (pointing to where wind blows TO) */}
+        <polygon
+          points="26,8 22,22 26,18 30,22"
+          fill="var(--accent)"
+        />
+        {/* Arrow tail */}
+        <polygon
+          points="26,44 24,32 26,36 28,32"
+          fill="var(--muted)"
+          opacity="0.5"
+        />
+      </g>
+    </svg>
+  )
+}
+
 function TileWind({ o }) {
   const avg = o?.wind_avg_kmh ?? null
   const max = o?.wind_max_kmh ?? null
   const dir = o?.wind_cardinal ?? null
   const deg = o?.wind_dir_deg ?? null
+
   return (
     <Tile area="wi">
       <TileLabel>Wind</TileLabel>
-      <div className="wind-sub-grid">
-        {[
-          { lbl: 'AVG', val: fmt(avg, 1), color: 'var(--text-bright)' },
-          { lbl: 'GUST', val: fmt(max, 1), color: 'var(--warn)' },
-          { lbl: 'DIR', val: dir || '—', color: 'var(--icon-purple)' },
-        ].map(({ lbl, val, color }) => (
-          <div key={lbl}>
-            <div style={{ ...mono, fontSize: '0.55rem', color, letterSpacing: '0.1em', opacity: 0.9 }}>{lbl}</div>
-            <Val size="1.6rem" color={color}>{val}</Val>
-            <Sub>{lbl === 'DIR' && deg !== null ? `${fmt(deg, 0)}°` : 'km/h'}</Sub>
-          </div>
-        ))}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {/* Compass rose */}
+        <CompassRose deg={deg !== null ? Math.round(deg) : null} />
+
+        {/* Values */}
+        <div className="wind-sub-grid" style={{ flex: 1 }}>
+          {[
+            { lbl: 'AVG', val: fmt(avg, 1), color: 'var(--text-bright)' },
+            { lbl: 'GUST', val: fmt(max, 1), color: 'var(--warn)' },
+            { lbl: 'DIR', val: dir || '—', color: 'var(--icon-purple)' },
+          ].map(({ lbl, val, color }) => (
+            <div key={lbl}>
+              <div style={{ ...mono, fontSize: '0.55rem', color, letterSpacing: '0.1em', opacity: 0.9 }}>{lbl}</div>
+              <Val size="1.5rem" color={color}>{val}</Val>
+              <Sub>{lbl === 'DIR' && deg !== null ? `${fmt(deg, 0)}°` : 'km/h'}</Sub>
+            </div>
+          ))}
+        </div>
       </div>
+
       {/* Gust overlay bar */}
       <div style={{ position: 'relative', height: 5, background: 'var(--bar-bg)', borderRadius: 99, overflow: 'hidden' }}>
         <div style={{ position: 'absolute', left: 0, top: 0, height: '100%', width: `${pct(avg, 80)}%`, background: 'var(--accent2)', transition: 'width 1.2s cubic-bezier(.4,0,.2,1)' }} />
@@ -200,34 +263,63 @@ function TileRainfall({ o }) {
 
 function TileHumidity({ o }) {
   const val = o?.humidity ?? null
-  // Humidity comfort zones
-  function humLabel(h) {
-    if (h === null) return ''
-    if (h < 30) return 'Very dry'; if (h < 50) return 'Comfortable'
-    if (h < 70) return 'Moderate'; if (h < 85) return 'Humid'
-    return 'Very humid'
+
+  function humInfo(h) {
+    if (h === null) return { label: '', color: 'var(--muted)' }
+    if (h < 30) return { label: 'Very dry', color: '#f97316' }
+    if (h < 50) return { label: 'Comfortable', color: '#22c55e' }
+    if (h < 70) return { label: 'Moderate', color: '#6ee7b7' }
+    if (h < 85) return { label: 'Humid', color: '#eab308' }
+    return { label: 'Very humid', color: '#ef4444' }
   }
+
+  const { label, color } = humInfo(val)
+
   return (
     <Tile area="hm">
       <TileLabel>Humidity</TileLabel>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
         <Val>{fmt(val, 0)}<span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}>%</span></Val>
-        <Sub style={{ marginTop: 0 }}>{humLabel(val)}</Sub>
+        <span style={{ ...mono, fontSize: '0.62rem', fontWeight: 700, color, letterSpacing: '0.06em' }}>
+          {label}
+        </span>
       </div>
-      <Bar p={pct(val, 100)} />
+      <Bar p={pct(val, 100)} color={color} />
     </Tile>
   )
 }
 
 function TilePressure({ o }) {
   const val = o?.pressure ?? null
+  // pressure_tendency is computed by Apps Script as a 3-hr delta (hPa)
+  // and stored in the observations table. Positive = rising, negative = falling.
+  const tendency = o?.pressure_tendency ?? null
+
+  function tendencyInfo(t) {
+    if (t === null || t === undefined) return null
+    if (t > 1) return { label: 'Rising ↑', color: 'var(--accent2)' }
+    if (t < -1) return { label: 'Falling ↓', color: 'var(--danger)' }
+    return { label: 'Steady →', color: 'var(--muted)' }
+  }
+
+  const td = tendencyInfo(tendency)
+
   return (
     <Tile area="pr">
       <TileLabel>Pressure</TileLabel>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.65rem', flexWrap: 'wrap' }}>
         <Val>{fmt(val, 1)}<span style={{ fontSize: '0.85rem', color: 'var(--muted)' }}> hPa</span></Val>
-        <span style={{ ...mono, fontSize: '0.62rem', color: 'var(--muted)' }}>Sea-level equiv.</span>
+        {td && (
+          <span style={{
+            ...mono, fontSize: '0.62rem', fontWeight: 700,
+            color: td.color, letterSpacing: '0.06em',
+            whiteSpace: 'nowrap'
+          }}>
+            {td.label}
+          </span>
+        )}
       </div>
+      <Sub>Sea-level equiv.{tendency !== null ? ` · ${tendency > 0 ? '+' : ''}${fmt(tendency, 1)} hPa/3hr` : ''}</Sub>
     </Tile>
   )
 }
