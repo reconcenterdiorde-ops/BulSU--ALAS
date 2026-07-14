@@ -38,11 +38,16 @@ function windDesc(k) {
   if (k < 40) return 'Fresh breeze'; if (k < 50) return 'Strong breeze'
   if (k < 62) return 'Near gale'; return 'Gale'
 }
+// Rainfall intensity classification per PAGASA Memorandum 20 June 2012
+// Labels match official PAGASA terminology used in public advisories.
 function rainClass(r) {
   if (r === null || r === undefined) return ''
-  if (r === 0) return 'No rain'; if (r < 2.5) return 'Light rain'
-  if (r < 7.5) return 'Moderate rain'; if (r < 15) return 'Heavy rain'
-  if (r < 30) return 'Very heavy rain'; return 'Torrential'
+  if (r === 0) return 'No rain'
+  if (r < 2.5) return 'Light'         // < 2.5 mm/h
+  if (r < 7.5) return 'Moderate'      // 2.5–7.5 mm/h
+  if (r < 15) return 'Heavy'         // 7.5–15 mm/h  → Yellow Warning
+  if (r < 30) return 'Intense'       // 15–30 mm/h   → Orange Warning
+  return 'Torrential'          // ≥ 30 mm/h    → Red Warning
 }
 function voltStatus(v) {
   if (v === null || v === undefined) return { label: '—', color: 'var(--muted)' }
