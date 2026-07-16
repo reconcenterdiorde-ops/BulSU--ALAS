@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Sun, Moon }           from 'lucide-react'
 import { format, parseISO, formatDistanceToNow } from 'date-fns'
+import bulsuLogo from '../assets/images/bulsu-logo.png'
+import reconLogo from '../assets/images/recon-logo.png'
 
 // ── Data freshness thresholds ─────────────────────────────────────────────────
 // Green  < 20 min  — within 1–2 normal 15-min cycles
@@ -47,8 +49,8 @@ export default function Header({ observation, theme, toggleTheme }) {
     <header>
       <div className="header-top">
         <div className="header-left">
-          <img src="/bulsu-logo.png" alt="BulSU" onError={e => e.target.style.display='none'} />
-          <img src="/drrm-logo.png"  alt="DRRM"  onError={e => e.target.style.display='none'} />
+          <img src={bulsuLogo} alt="BulSU" onError={e => e.target.style.display='none'} />
+          <img src={reconLogo}  alt="RECON"  onError={e => e.target.style.display='none'} />
           <div className="title-divider" />
           <div>
             <div className="title-main">
